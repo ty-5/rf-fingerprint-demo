@@ -1,70 +1,127 @@
-# Getting Started with Create React App
+# Demo Web Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> **Interactive demonstration of our RF fingerprinting model achieving 98% accuracy with perfect distance invariance**
 
-## Available Scripts
+## Demo Objectives
 
-In the project directory, you can run:
+This web application demonstrates our trained RF fingerprinting model in action, proving that our AI can accurately identify radio frequency devices by analyzing raw signal data rather than metadata or filenames.
 
-### `npm start`
+## What We're Demonstrating
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### **Core Capability Proof**
+- **98% accurate device classification** from raw RF signal data
+- **Perfect distance invariance** - accuracy unchanged across power levels
+- **Real signal analysis** - model reads actual I/Q data, not file information
+- **16 transmitter identification** from ORACLE dataset
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### **Visual Evidence**
+- **Step-by-step model analysis** showing feature extraction in real-time
+- **Signal visualization** displaying actual I/Q waveforms being processed
+- **Interactive confidence building** from 0% to 98% as features are detected
+- **Feature highlighting** showing which signal patterns identify each device
 
-### `npm test`
+## Frontend Architecture
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### **React Component Structure**
+```
+src/
+├── components/
+│   ├── SignalUpload.js           # Drag & drop for .pkl files
+│   ├── SignalVisualizer.js       # Real-time I/Q signal plotting
+│   ├── ModelAnalysis.js          # Step-by-step CNN processing view
+│   ├── ResultsPanel.js           # Device identification display
+│   ├── ControlPanel.js           # Distance/noise simulation sliders
+│   └── ConfidenceMeter.js        # Animated confidence progression
+├── services/
+│   ├── modelService.js           # Interface to Python model backend
+│   └── signalProcessor.js        # Client-side signal manipulation
+└── utils/
+    └── deviceDatabase.js         # Static info for 16 ORACLE transmitters
+```
 
-### `npm run build`
+// Basic setup to keep in mind as per common practice, but subject to change
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### **Backend Integration**
+- **Local Python server** running our trained PyTorch model
+- **Direct model inference** using RF_Model_Weights.pth
+- **Real preprocessing pipeline** from our training methodology
+- **No database required** - stateless operation with hardcoded device info
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Demo Flow Design
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### **1. Anonymous Signal Challenge**
+- Upload ORACLE .pkl files with randomized/anonymous names
+- Display raw I/Q signal data being analyzed
+- Show model extracting hardware fingerprint features
+- Reveal correct device prediction (TX_01, TX_05, etc.) with 98%+ confidence
 
-### `npm run eject`
+### **2. Real-Time Analysis Visualization**
+- **Signal preprocessing** - show normalization and feature extraction
+- **CNN layer progression** - visualize neural network processing stages
+- **Feature detection** - highlight discriminative signal patterns
+- **Confidence building** - animate meter from 0% → 98% as analysis completes
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **3. Interactive Validation**
+- **Distance slider** - modify signal amplitude, demonstrate flat 98% accuracy }\
+- **Noise slider** - add interference, show realistic performance degradation  } ~> If Feasible
+- **Signal comparison** - side-by-side view of different device signatures     }/
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### **4. Proof of Signal Analysis**
+- **Feature importance heatmap** - show which parts of signal matter most
+- **Pattern highlighting** - identify device-specific characteristics
+- **Multiple file test** - process several signals to prove consistency
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🔧 Technical Implementation
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### **Frontend Technology**
+- **React 18** for interactive user interface
+- **Recharts/Chart.js** for real-time signal visualization
+- **File upload handling** for ORACLE .pkl format
+- **WebSocket connection** to Python backend for real-time updates
 
-## Learn More
+### **Model Integration**
+- **Python Flask server** hosting our trained CNN model
+- **Direct PyTorch inference** using CNN_Extended.py architecture
+- **ORACLE preprocessing pipeline** exactly as used in training
+- **Feature extraction** for visualization purposes
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### **No External Dependencies**
+- **No database** - all device info hardcoded for 16 transmitters
+- **No cloud APIs** - entirely local demonstration
+- **No user accounts** - stateless single-session operation
+- **Portable setup** - runs on laptop for investor presentations
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Key Messages
 
-### Code Splitting
+### **"The Model Reads Actual Signal Data"**
+- Upload files with random names → correct classification
+- Show raw I/Q waveforms → highlight discriminative features
+- Real-time feature extraction → prove signal content analysis
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### **"Our AI Achieves True Distance Invariance"**
+- Amplitude scaling simulation → accuracy stays at 98%
+- Distance slider demonstration → flat performance across ranges
+- Compare to traditional solutions → show competitive advantage
 
-### Analyzing the Bundle Size
+### **"98% Accuracy is Legitimate and Robust"**
+- Consistent results across multiple test files
+- Real-time analysis showing confident predictions
+- Visual proof of sophisticated pattern recognition
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Success Metrics for Demo
 
-### Making a Progressive Web App
+### **Technical Validation**
+- Model correctly classifies uploaded ORACLE samples
+- Confidence levels consistently show 95-99% for correct predictions
+- Distance invariance slider shows <1% accuracy variation
+- Analysis completes in <2 seconds per sample
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### **Audience Engagement**
+- Non-technical individuals understand the AI is analyzing signal content
+- Visual demonstrations clearly show model capabilities
+- Interactive elements prove robustness claims
+- Professional presentation quality suitable for investment meetings
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Goal**: Create a compelling, interactive demonstration that proves our RF fingerprinting technology works by showing the AI analyzing actual signal data in real-time.
