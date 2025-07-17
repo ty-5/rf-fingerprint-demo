@@ -1,5 +1,3 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 /node_modules
 /.pnp
@@ -21,3 +19,19 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Large dataset files
+oracle_rf_ALL_DATA.pkl
+*.pkl
+
+# Model weights (if too large)
+RF_Model_Weights_98%.pth
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db

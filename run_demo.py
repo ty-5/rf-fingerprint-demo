@@ -1,0 +1,1 @@
+# Starts both backend and frontend
