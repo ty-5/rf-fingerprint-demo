@@ -24,7 +24,7 @@ yarn-error.log*
 oracle_rf_ALL_DATA.pkl
 *.pkl
 
-# Model weights (if too large)
+# Model weights
 RF_Model_Weights_98%.pth
 
 # Python cache

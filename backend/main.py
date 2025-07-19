@@ -186,6 +186,8 @@ async def load_model():
         # Load trained weights
         weights_path = ROOT_DIR / "RF_Model_Weights_98%.pth"
         print(f"Loading weights from: {weights_path}")
+        print(f"🔍 File exists: {weights_path.exists()}")
+        print(f"🔍 File size: {weights_path.stat().st_size / (1024*1024):.2f} MB")
         
         if not weights_path.exists():
             raise FileNotFoundError(f"Model weights not found: {weights_path}")
@@ -194,6 +196,8 @@ async def load_model():
         state_dict = torch.load(str(weights_path), map_location=device)
         model.load_state_dict(state_dict)
         
+        print(f"🔍 Model parameters loaded: {sum(p.numel() for p in model.parameters())}")
+
         # Set to evaluation mode
         # This disables dropout, batch norm training mode, etc.
         model.eval()
@@ -213,49 +217,44 @@ async def load_model():
 # =============================================================================
 
 def preprocess_signal(signal_data: List[List[float]]) -> torch.Tensor:
-    """
-    Convert raw signal data to PyTorch tensor format
-    
-    Args:
-        signal_data: List of 2 lists [I_channel, Q_channel]
-        
-    Returns:
-        torch.Tensor: Preprocessed signal ready for model inference
-        
-    Process:
-    1. Convert to numpy array
-    2. Validate shape (must be 2 channels)
-    3. Pad or truncate to correct window size
-    4. Convert to PyTorch tensor
-    5. Add batch dimension for model
-    """
+    """Convert raw signal data to PyTorch tensor format"""
     try:
+        print(f"🔍 Preprocessing signal_data type: {type(signal_data)}")
+        print(f"🔍 Preprocessing signal_data length: {len(signal_data) if signal_data else 'None'}")
+        
         # Convert to numpy array with correct data type
         signal_array = np.array(signal_data, dtype=np.float64)
+        print(f"🔍 Converted to numpy shape: {signal_array.shape}")
         
-        # Validate input shape
+        # Ensure correct shape: [channels, time_samples]
         if signal_array.shape[0] != 2:
             raise ValueError(f"Expected 2 channels (I/Q), got {signal_array.shape[0]}")
         
-        # Ensure correct window size
         if signal_array.shape[1] != configs.window_size:
+            # Pad or truncate to correct size
             if signal_array.shape[1] < configs.window_size:
-                # Pad with zeros if signal is too short
+                # Pad with zeros
                 padding = configs.window_size - signal_array.shape[1]
                 signal_array = np.pad(signal_array, ((0, 0), (0, padding)), mode='constant')
             else:
-                # Truncate if signal is too long
+                # Truncate
                 signal_array = signal_array[:, :configs.window_size]
         
-        # Convert to PyTorch tensor
+        # Convert to PyTorch tensor and add batch dimension
         signal_tensor = torch.tensor(signal_array, dtype=configs.datatype, device=device)
+        signal_tensor = signal_tensor.unsqueeze(0)  # Add batch dimension
         
-        # Add batch dimension: [channels, time] → [batch=1, channels, time]
-        signal_tensor = signal_tensor.unsqueeze(0)
+        # ADD THIS NORMALIZATION (SAME AS TRAINING):
+        IQ_mean = signal_tensor.mean()
+        IQ_std = signal_tensor.std()
+        signal_tensor = (signal_tensor - IQ_mean) / (IQ_std + 1e-8)
+        
+        print(f"🔍 After normalization - mean: {signal_tensor.mean():.6f}, std: {signal_tensor.std():.6f}")
         
         return signal_tensor
         
     except Exception as e:
+        print(f"❌ Preprocessing error: {e}")
         raise ValueError(f"Signal preprocessing failed: {str(e)}")
 
 def extract_layer_outputs(signal_tensor: torch.Tensor) -> List[Dict[str, Any]]:
@@ -395,6 +394,19 @@ async def classify_signal(signal_request: SignalData):
     
     try:
         start_time = time.time()
+
+        # DEBUGGING :
+        print(f"🔍 Received signal request")
+        print(f"🔍 Signal type: {type(signal_request.signal)}")
+        print(f"🔍 Signal length: {len(signal_request.signal) if signal_request.signal else 'None'}")
+        print(f"🔍 First 5 I values: {signal_request.signal[0][:5]}")
+        print(f"🔍 First 5 Q values: {signal_request.signal[1][:5]}")
+        print(f"🔍 Signal statistics - I min/max: {min(signal_request.signal[0]):.3f}/{max(signal_request.signal[0]):.3f}")
+        print(f"🔍 Signal statistics - Q min/max: {min(signal_request.signal[1]):.3f}/{max(signal_request.signal[1]):.3f}")
+        if signal_request.signal:
+            print(f"🔍 First channel length: {len(signal_request.signal[0]) if len(signal_request.signal) > 0 else 'No first channel'}")
+            print(f"🔍 Second channel length: {len(signal_request.signal[1]) if len(signal_request.signal) > 1 else 'No second channel'}")
+            print(f"🔍 First few values channel 0: {signal_request.signal[0][:5] if len(signal_request.signal) > 0 else 'None'}")
         
         # Step 1: Preprocess the signal
         signal_tensor = preprocess_signal(signal_request.signal)
@@ -403,9 +415,15 @@ async def classify_signal(signal_request: SignalData):
         with torch.no_grad():
             # Forward pass through the CNN
             predictions = model(signal_tensor)
+            # After running inference, before softmax:
+            print(f"🔍 Raw model outputs (logits): {predictions[0].cpu().tolist()}")
+            print(f"🔍 Min logit: {torch.min(predictions).item():.3f}")
+            print(f"🔍 Max logit: {torch.max(predictions).item():.3f}")
+            print(f"🔍 Logit range: {torch.max(predictions).item() - torch.min(predictions).item():.3f}")
             # Convert logits to probabilities using softmax
             probabilities = torch.softmax(predictions, dim=1)
         
+
         # Step 3: Extract results
         predicted_class = int(torch.argmax(probabilities, dim=1)[0])
         confidence = float(torch.max(probabilities, dim=1)[0])
