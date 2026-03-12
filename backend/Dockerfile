@@ -11,7 +11,7 @@ COPY backend/lambda_handler.py ${LAMBDA_TASK_ROOT}/
 COPY backend/models/ ${LAMBDA_TASK_ROOT}/models/
 
 # Copy model weights from project root
-COPY RF_Model_Weights_98%.pth ${LAMBDA_TASK_ROOT}/
+COPY RF_Model_Weights_98%.pth ${LAMBDA_TASK_ROOT}/model_weights.pt
 COPY CNN_Extended.py ${LAMBDA_TASK_ROOT}/
 COPY configs.py ${LAMBDA_TASK_ROOT}/
 
