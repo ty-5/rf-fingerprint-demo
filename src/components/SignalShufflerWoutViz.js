@@ -110,7 +110,7 @@ const SignalShuffler = () => {
         try {
             console.log('Sending signal to classifier...');
 
-            const response = await fetch('https://uxqimyna7vdfxtrmtjcawbf5ia0wcztx.lambda-url.us-east-1.on.aws/classify', {
+            const response = await fetch('https://5mcnigjdil.execute-api.us-east-1.amazonaws.com/classify', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

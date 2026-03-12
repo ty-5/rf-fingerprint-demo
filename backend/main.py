@@ -39,7 +39,7 @@ import time
 
 # Add parent directory to Python path so we can import our custom modules
 # This allows us to import CNN_Extended.py and configs.py from the root directory
-ROOT_DIR = Path(__file__).parent.parent
+ROOT_DIR = Path(__file__).parent
 sys.path.append(str(ROOT_DIR))
 
 # Import our custom modules
@@ -63,11 +63,7 @@ app = FastAPI(
 # This allows our React frontend to communicate with this backend server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite dev server (React)
-        "http://localhost:3000",  # Create React App dev server
-        "http://localhost:5174"   # Alternative Vite port
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],        # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],        # Allow all headers
@@ -147,70 +143,55 @@ class LayerStreamResponse(BaseModel):
 # MODEL LOADING (STARTUP EVENT)
 # =============================================================================
 
-@app.on_event("startup")
-async def load_model():
-    """
-    Load the trained PyTorch model when the server starts
-    
-    This function runs once when the FastAPI server starts up.
-    It loads our trained CNN model and prepares it for inference.
-    
-    Process:
-    1. Determine if CUDA (GPU) is available
-    2. Create model architecture using CNNFingerprinter class
-    3. Load trained weights from RF_Model_Weights_98%.pth
-    4. Set model to evaluation mode (disable training features)
-    """
+def _init_model():
+    """Load the trained PyTorch model. Called at module level for Lambda compatibility."""
     global model, device
-    
+
+    if model is not None:
+        return  # Already loaded
+
     print("RF Classifier API Server Starting...")
     print("Loading trained CNN model...")
-    
-    # Determine computation device
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
-    
+
     try:
-        # Create model architecture
-        # Parameters match our training configuration:
-        # - 16 transmitters (ORACLE dataset)
-        # - 2 input channels (I/Q)
-        # - Window size from configs.py (128 samples)
         print("Creating CNN architecture...")
         model = CNNFingerprinter(
             num_transmitters=16,
             input_channels=2,
             input_window=configs.window_size
         ).to(device)
-        
-        # Load trained weights
-        weights_path = ROOT_DIR / "RF_Model_Weights_98%.pth"
+
+        weights_path = ROOT_DIR / "model_weights.pt"
         print(f"Loading weights from: {weights_path}")
-        print(f"🔍 File exists: {weights_path.exists()}")
-        print(f"🔍 File size: {weights_path.stat().st_size / (1024*1024):.2f} MB")
-        
+        print(f"File exists: {weights_path.exists()}")
+        print(f"File size: {weights_path.stat().st_size / (1024*1024):.2f} MB")
+
         if not weights_path.exists():
             raise FileNotFoundError(f"Model weights not found: {weights_path}")
-        
-        # Load state dictionary (trained parameters)
+
         state_dict = torch.load(str(weights_path), map_location=device)
         model.load_state_dict(state_dict)
-        
-        print(f"🔍 Model parameters loaded: {sum(p.numel() for p in model.parameters())}")
-
-        # Set to evaluation mode
-        # This disables dropout, batch norm training mode, etc.
         model.eval()
-        
-        print("Model loaded successfully!")
-        print(f"Input shape: [batch_size, 2, {configs.window_size}]")
-        print(f"Output shape: [batch_size, 16]")
+
+        print(f"Model loaded! Parameters: {sum(p.numel() for p in model.parameters())}")
         print(f"Ready to classify RF signals!")
-        
+
     except Exception as e:
         print(f"Failed to load model: {e}")
-        print("Make sure RF_Model_Weights_98%.pth is in the root directory")
         raise
+
+
+# Load model at module import time (runs during Lambda cold start, cached for warm invocations)
+_init_model()
+
+
+@app.on_event("startup")
+async def load_model():
+    """Startup event for local dev — model is already loaded at module level for Lambda."""
+    _init_model()
 
 # =============================================================================
 # UTILITY FUNCTIONS
