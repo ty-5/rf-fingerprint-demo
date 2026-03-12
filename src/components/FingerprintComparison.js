@@ -66,7 +66,7 @@ const FingerprintComparison = ({ signalData }) => {
                 const processedSignal = prepareSignalForComparison(sample.signal);
 
                 // Get ConvBlock3 features (layer index 3)
-                const response = await fetch('http://localhost:8000/classify/stream', {
+                const response = await fetch('https://uxqimyna7vdfxtrmtjcawbf5ia0wcztx.lambda-url.us-east-1.on.aws/classify/stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
